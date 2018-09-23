@@ -1,4 +1,4 @@
-#include <safelogin/safelogin.hpp>
+#include <safelogin.hpp>
 
 void safelogin::initusr(account_name _usr, std::string _publicRSA){
 

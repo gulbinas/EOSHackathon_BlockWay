@@ -1,5 +1,5 @@
-/// @abi table accounts i64
-struct accounts{
+/// @abi table account i64
+struct account{
 
   account_name acc_name;
   std::string publicRSA;
@@ -9,5 +9,5 @@ struct accounts{
 
   uint64_t primary_key() const { return acc_name;}
 
-  EOSLIB_SERIALIZE(accounts,(acc_name)(publicRSA)(owned_assets)(assetToGive)(assetNameToGive))
+  EOSLIB_SERIALIZE(account,(acc_name)(publicRSA)(owned_assets)(assetToGive)(assetNameToGive))
 };
