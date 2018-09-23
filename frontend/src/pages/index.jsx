@@ -80,6 +80,9 @@ class Index extends Component {
     super(props)
     this.state = {
       credentials: [], // to store the table rows from smart contract
+      showtransfer: false,
+      loading: true,
+      assets: []
     };
     this.handleFormEvent = this.handleFormEvent.bind(this);
   }
@@ -106,9 +109,6 @@ class Index extends Component {
 
 
     JSEncrypt.setPrivateKey(user1private);
-    // console.log(JSEncrypt, CryptoJS.SHA256);
-    // let val = JSEncrypt.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256");
-    // console.log(val);
 
     // define actionName and action according to event type
     switch (event.target.type.value) {
@@ -135,6 +135,7 @@ class Index extends Component {
           _account_to: account2,
           _uid: event.target.uid.value
         };
+        break;
       default:
         return;
     }
@@ -158,7 +159,6 @@ class Index extends Component {
       }],
     });
 
-    console.log(result);
     this.getTable();
   }
 
@@ -176,99 +176,195 @@ class Index extends Component {
     }).then(result => this.setState({ credentials: result.rows }));
   }
 
+  getAsset(assetId) {
+    const eos = Eos({
+      httpEndpoint: endpoint,
+    });
+
+    eos.getTableRows({
+      "json": true,
+      "code": "venturerocks",   // contract who owns the table
+      "scope": "venturerocks",  // scope of the table
+      "table": "assets",    // name of the table as specified by the contract abi
+      "limit": 100,
+    }).then(result => {
+      // let assets = [];
+
+      // console.log(result.rows[0])
+      //
+      // for(let i; i < result.rows.length; i++) {
+      //   console.log(result.rows[i]);
+      //   if (result.rows[i].owner !== accounts[0].name) {
+      //     return;
+      //   }
+      //
+      //   assets.push(result.rows[i]);
+      // }
+      //
+      // console.log(assets);
+
+      this.setState({ assets: result.rows, loading: false })
+    });
+  }
+
   componentDidMount() {
     this.getTable();
+    this.getAsset();
+  }
+
+  showTransferBut() {
+    this.setState({showtransfer: true});
+  }
+
+  async transferCredentials(asset_id, public_rsa, user) {
+      console.log(asset_id, public_rsa, user);
+
+      const account = accounts[0].name;
+      const privateKey = accounts[0].privateKey;
+      const eos = Eos({
+        httpEndpoint: endpoint,
+        keyProvider: privateKey,
+      });
+
+      const result = await eos.transaction({
+        actions: [{
+          account: "venturerocks",
+          name: "remove",
+          authorization: [{
+            actor: account,
+            permission: 'active',
+          }],
+          data: {
+            _usr: user,
+            _asset_id: asset_id
+          },
+        }],
+      });
+
+      this.getAsset();
+  }
+
+  async deleteAsset(asset_id, user) {
+    // const account = accounts[0].name;
+    // const privateKey = accounts[0].privateKey;
+    // const eos = Eos({
+    //   httpEndpoint: endpoint,
+    //   keyProvider: privateKey,
+    // });
+
+    // console.log();
+
+    // const result = await eos.transaction({
+    //   actions: [{
+    //     account: "venturerocks",
+    //     name: "remove",
+    //     authorization: [{
+    //       actor: account,
+    //       permission: 'active',
+    //     }],
+    //     data: {
+    //       _usr: account,
+    //       _asset_id: new Number(asset_id),
+    //     },
+    //   }],
+    // });
+    //
+    // console.log(result);
+
+    let config = {
+     chainId: "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f",
+     httpEndpoint: 'http://10.20.3.30:8888',
+     authorization: 'useraaaaaaaa@active',
+     keyProvider: ['5K7mtrinTFrVTduSxizUc5hjXJEtTjVTsqSHeBHes1Viep86FP5'],
+     expireInSeconds: 60,
+     broadcast: true,
+     verbose: false, // API activity
+     sign: true
+    }
+
+    let eos = Eos(config);
+
+
+  eos.contract('venturerocks').then((venturerocks) => {
+    venturerocks.remove("useraaaaaaaa",40003)
+  });
   }
 
   render() {
-    const { credentials } = this.state;
+    const { credentials, assets } = this.state;
     const { classes } = this.props;
 
-    // generate each note as a card
-    // const generateCard = (key, user, assets, public_rsa) => (
-    //   <Card className={classes.card} key={key}>
-    //     <CardContent>
-    //       <Typography variant="headline" component="h2" size={16}>
-    //         {user}
-    //       </Typography>
-    //       <Typography style={{fontSize:12}} color="textSecondary" gutterBottom>
-    //         {new Date(timestamp*1000).toString()}
-    //       </Typography>
-    //       <ExpansionPanel>
-    //         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-    //           <Typography className={classes.heading}>Expansion Panel 1</Typography>
-    //         </ExpansionPanelSummary>
-    //         <ExpansionPanelDetails>
-    //           <Typography>
-    //             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex,
-    //             sit amet blandit leo lobortis eget.
-    //           </Typography>
-    //         </ExpansionPanelDetails>
-    //       </ExpansionPanel>
-    //       <Grid container spacing={16}>
-    //         <Grid item>
-    //           <form onSubmit={this.handleFormEvent}>
-    //             <input type="hidden" name="type" value="transfer" />
-    //             <input type="hidden" name="uid" value={uid} />
-    //             <Button
-    //               variant="contained"
-    //               color="primary"
-    //               className={classes.formButton}
-    //               type="submit">
-    //               Share credentials with useraaaaaaab
-    //             </Button>
-    //           </form>
-    //         </Grid>
-    //         <Grid item>
-    //           <form onSubmit={this.handleFormEvent}>
-    //             <input type="hidden" name="type" value="destroy" />
-    //             <input type="hidden" name="uid" value={uid} />
-    //             <Button
-    //               variant="contained"
-    //               color="primary"
-    //               className={classes.formButton}
-    //               type="submit">
-    //               Delete
-    //             </Button>
-    //           </form>
-    //         </Grid>
-    //       </Grid>
-    //     </CardContent>
-    //   </Card>
-    // );
-
-
-
-    const printAssets = (key, asset) => (
-      <Card className={classes.card} key={key}>
-        <CardContent>
-          <Typography>{asset}</Typography>
-        </CardContent>
-      </Card>
-    );
-
-    const printCredentials = (key, user, assets, public_rsa) => (
+    const printAssets = (key, asset_id, asset_name, public_rsa, user) => (
       <ExpansionPanel key={key}>
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography className={classes.heading}>{user} ({assets.length})</Typography>
+          <Typography className={classes.heading}>{asset_name}</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-          {assets.length ? (
-            assets.map((row, i) => printAssets(i, row))
-          ) : (
-            <Typography>There are no credentials assigned to this user.</Typography>
-          )}
+          <Button color="primary" onClick={(e) => { e.preventDefault(); this.deleteAsset(asset_id, user) }}>Delete credential</Button>
+          <Button color="primary" onClick={(e) => { e.preventDefault(); this.traansferCredentials(asset_id, public_rsa, user) }}>Transfer to useraaaaaaab</Button>
         </ExpansionPanelDetails>
       </ExpansionPanel>
     );
 
-    let storedCredentials = credentials.map((row, i) => {
-      if (row.acc_name == 'useraaaaaaaa') {
-        return printCredentials(i, row.acc_name, row.owned_assets, row.publicRSA)
-      }
+    // const printCredentials = (key, user, assets, public_rsa) => (
+    //   <ExpansionPanel key={key}>
+    //     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+    //       <Typography className={classes.heading}>{user} ({assets.length})</Typography>
+    //     </ExpansionPanelSummary>
+    //     <ExpansionPanelDetails>
+    //       {assets.length ? (
+    //         assets.map((row, i) => printAssets(i, row))
+    //       ) : (
+    //         <Typography>There are no credentials assigned to this user.</Typography>
+    //       )}
+    //     </ExpansionPanelDetails>
+    //   </ExpansionPanel>
+    // );
+
+    // const printAssetsCredentials = () => (
+    //   <Card key={key}>
+    //     <CardContent>
+    //       <Typography className={classes.heading}>{user}</Typography>
+    //
+    //     </CardContent>
+    //   </Card>
+    // );
+
+    // const printasCredentials = (key, user, assets, public_rsa) => (
+    //   <ExpansionPanel key={key}>
+    //     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+    //       <Typography className={classes.heading}>{user} ({assets.length})</Typography>
+    //     </ExpansionPanelSummary>
+    //     <ExpansionPanelDetails>
+    //       {assets.length ? (
+    //         assets.map((row, i) => printAssets(i, row))
+    //       ) : (
+    //         <Typography>There are no credentials assigned to this user.</Typography>
+    //       )}
+    //     </ExpansionPanelDetails>
+    //   </ExpansionPanel>
+    // );
+
+    // let listCredentials = credentials.map((row, i) => {
+    //   if (row.acc_name === 'useraaaaaaaa') {
+    //     return printAssetsCredentials(i, row.acc_name, this.state.assets)
+    //   }
+    // });
+
+    let listAssets = assets.map((row, i) => {
+        return printAssets(i, row.ID, row.asset_name, row.encrypted_asset_content, row.owner)
     });
 
+    // const preloadAssets = () => {
+    //   console.log(this.state.assets);
+    // }
+
+    if (this.state.loading) {
+      return null;
+    }
+
     return (
+
       <div>
         <AppBar position="static" color="default">
           <Toolbar>
@@ -280,7 +376,7 @@ class Index extends Component {
         </Typography>
 
         <div className={classes.wrap}>
-          { storedCredentials }
+          { listAssets }
         </div>
 
         <Card className={classes.card}>
