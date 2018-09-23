@@ -275,12 +275,54 @@ class Index extends Component {
         venturerocks.proposedup(account, "useraaaaaaab", asset_id, encoded)
 
         this.getAsset();
+        this.acceptdup();
       });
 
-      this.getAsset();
   }
 
-  async deleteAsset(asset_id, user) {
+  async acceptdup() {
+    "use strict";
+
+      const account = accounts[1].name;
+      const privateKey = accounts[1].privateKey;
+      // const eos = Eos({
+      //   httpEndpoint: endpoint,
+      //   keyProvider: privateKey,
+      // });
+
+      // let decrypt = new jsencrypt();
+      // decrypt.setPrivateKey(user1private);
+      //
+      // let decrypted = decrypt.decrypt(encrypted_asset_content);
+      //
+      // let encrypt = new jsencrypt();
+      // encrypt.setPublicKey(user2private);
+      //
+      // let encoded = encrypt.encrypt(decrypted);
+      //
+      // console.log(encoded);
+
+      let config = {
+       chainId: "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f",
+       httpEndpoint: endpoint,
+       authorization: 'useraaaaaaab@active',
+       keyProvider: privateKey,
+       expireInSeconds: 60,
+       broadcast: true,
+       verbose: false, // API activity
+       sign: true
+      }
+
+      let eos2 = Eos(config);
+
+      eos2.contract('venturerocks').then((venturerocks) => {
+        venturerocks.acceptdup('useraaaaaaab', "useraaaaaaaa")
+
+        this.getAsset();
+      });
+  }
+
+  async acceptAsset(asset_id, user) {
     "use strict";
 
     let config = {
