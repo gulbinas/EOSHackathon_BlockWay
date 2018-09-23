@@ -169,7 +169,6 @@ class Index extends Component {
     });
 
     this.getTable();
-    this.getAsset();
   }
 
   // gets table data from the blockchain
@@ -198,25 +197,8 @@ class Index extends Component {
       "table": "assets",    // name of the table as specified by the contract abi
       "limit": 100,
     }).then(result => {
-      // let assets = [];
-
-      // console.log(result.rows[0])
-      //
-      // for(let i; i < result.rows.length; i++) {
-      //   console.log(result.rows[i]);
-      //   if (result.rows[i].owner !== accounts[0].name) {
-      //     return;
-      //   }
-      //
-      //   assets.push(result.rows[i]);
-      // }
-      //
-      // console.log(assets);
-
       this.setState({ assets: result.rows, loading: false })
     });
-
-    this.getAsset();
   }
 
   componentDidMount() {
@@ -228,16 +210,16 @@ class Index extends Component {
     this.setState({showtransfer: true});
   }
 
-  async proposedup(asset_id, public_rsa, user) {
+  proposedup(asset_id, public_rsa, _encrypted_asset_content, user) {
 
-    console.log(asset_id, public_rsa, user);
+    console.log(asset_id, public_rsa, user, _encrypted_asset_content);
 
-      // const account = accounts[0].name;
-      // const privateKey = accounts[0].privateKey;
-      // const eos = Eos({
-      //   httpEndpoint: endpoint,
-      //   keyProvider: privateKey,
-      // });
+      const account = accounts[0].name;
+      const privateKey = accounts[0].privateKey;
+      const eos = Eos({
+        httpEndpoint: endpoint,
+        keyProvider: privateKey,
+      });
       //
       // const result = await eos.transaction({
       //   actions: [{
