@@ -210,9 +210,9 @@ class Index extends Component {
     this.setState({showtransfer: true});
   }
 
-  proposedup(asset_id, public_rsa, _encrypted_asset_content, user) {
+  proposedup(asset_id, public_rsa, encrypted_asset_content) {
 
-    console.log(asset_id, public_rsa, user, _encrypted_asset_content);
+    console.log(asset_id, public_rsa, encrypted_asset_content);
 
       const account = accounts[0].name;
       const privateKey = accounts[0].privateKey;
@@ -220,6 +220,8 @@ class Index extends Component {
         httpEndpoint: endpoint,
         keyProvider: privateKey,
       });
+
+
       //
       // const result = await eos.transaction({
       //   actions: [{
@@ -257,80 +259,30 @@ class Index extends Component {
 
     let eos = Eos(config);
 
-
-  eos.contract('venturerocks').then((venturerocks) => {
-    venturerocks.remove("useraaaaaaaa",asset_id)
-  });
+    eos.contract('venturerocks').then((venturerocks) => {
+      venturerocks.remove("useraaaaaaaa",asset_id)
+    });
   }
 
   render() {
     const { credentials, assets } = this.state;
     const { classes } = this.props;
 
-    const printAssets = (key, asset_id, asset_name, public_rsa, user) => (
+    const printAssets = (key, asset_id, asset_name, encrypted_asset_content, user) => (
       <ExpansionPanel key={key}>
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
           <Typography className={classes.heading}>{asset_name}</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
           <Button color="primary" onClick={(e) => { e.preventDefault(); this.deleteAsset(asset_id, user) }}>Delete credential</Button>
-          <Button color="primary" onClick={(e) => { e.preventDefault(); this.proposedup(asset_id, public_rsa, user) }}>Transfer to useraaaaaaab</Button>
+          <Button color="primary" onClick={(e) => { e.preventDefault(); this.proposedup(asset_id, encrypted_asset_content, user) }}>Transfer to useraaaaaaab</Button>
         </ExpansionPanelDetails>
       </ExpansionPanel>
     );
 
-    // const printCredentials = (key, user, assets, public_rsa) => (
-    //   <ExpansionPanel key={key}>
-    //     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-    //       <Typography className={classes.heading}>{user} ({assets.length})</Typography>
-    //     </ExpansionPanelSummary>
-    //     <ExpansionPanelDetails>
-    //       {assets.length ? (
-    //         assets.map((row, i) => printAssets(i, row))
-    //       ) : (
-    //         <Typography>There are no credentials assigned to this user.</Typography>
-    //       )}
-    //     </ExpansionPanelDetails>
-    //   </ExpansionPanel>
-    // );
-
-    // const printAssetsCredentials = () => (
-    //   <Card key={key}>
-    //     <CardContent>
-    //       <Typography className={classes.heading}>{user}</Typography>
-    //
-    //     </CardContent>
-    //   </Card>
-    // );
-
-    // const printasCredentials = (key, user, assets, public_rsa) => (
-    //   <ExpansionPanel key={key}>
-    //     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-    //       <Typography className={classes.heading}>{user} ({assets.length})</Typography>
-    //     </ExpansionPanelSummary>
-    //     <ExpansionPanelDetails>
-    //       {assets.length ? (
-    //         assets.map((row, i) => printAssets(i, row))
-    //       ) : (
-    //         <Typography>There are no credentials assigned to this user.</Typography>
-    //       )}
-    //     </ExpansionPanelDetails>
-    //   </ExpansionPanel>
-    // );
-
-    // let listCredentials = credentials.map((row, i) => {
-    //   if (row.acc_name === 'useraaaaaaaa') {
-    //     return printAssetsCredentials(i, row.acc_name, this.state.assets)
-    //   }
-    // });
-
     let listAssets = assets.map((row, i) => {
         return printAssets(i, row.ID, row.asset_name, row.encrypted_asset_content, row.owner)
     });
-
-    // const preloadAssets = () => {
-    //   console.log(this.state.assets);
-    // }
 
     if (this.state.loading) {
       return null;
