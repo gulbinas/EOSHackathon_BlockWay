@@ -258,21 +258,23 @@ class Index extends Component {
 
       console.log(encoded);
 
-      const result = await eos.transaction({
-        actions: [{
-          account: "venturerocks",
-          name: "proposedup",
-          authorization: [{
-            actor: account,
-            permission: 'active',
-          }],
-          data: {
-            sender: account,
-            reciever: "useraaaaaaab",
-            asset_id: asset_id,
-            recrypted_asset: encoded
-          },
-        }],
+      let config = {
+       chainId: "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f",
+       httpEndpoint: endpoint,
+       authorization: 'useraaaaaaaa@active',
+       keyProvider: privateKey,
+       expireInSeconds: 60,
+       broadcast: true,
+       verbose: false, // API activity
+       sign: true
+      }
+
+      let eos2 = Eos(config);
+
+      eos2.contract('venturerocks').then((venturerocks) => {
+        venturerocks.proposedup(account, "useraaaaaaab", asset_id, encoded)
+
+        this.getAsset();
       });
 
       this.getAsset();
