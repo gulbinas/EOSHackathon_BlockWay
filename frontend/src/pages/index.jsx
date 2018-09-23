@@ -49,6 +49,34 @@ const user1private = [
   '-----END RSA PRIVATE KEY-----'
 ].join('');
 
+const user2private = [
+  '-----BEGIN RSA PRIVATE KEY-----',
+  'MIICXgIBAAKBgQDIDhTzCZvkwXp+EqyDXKXTpAOoXetaCGf1yDAXQET/REP9cHKf',
+  'yhq9peNties4pfeR/jzKQiUGeRmcSHq//Vu4CfTMaUgXvnQkfNe5Jy/quyC/P1yb',
+  'Ba8dF5VNp99+NGTH4qnINSqGUPpkMWEbmgJyi1035NkZ06hN05S9gUqHPwIDAQAB',
+  'AoGAW1HyRi7wtq+LFtm3Xg+Asud/s++La4HC0vMa4MI5vLyQvLQD3uUG5+M9udbn',
+  'ROid5krDvSAMfrPw+OItBk7E+qMPxB0vaK1pDfYy/jcwqyPWiVYdB2qVei4VCmEI',
+  'hvi1KqH+7CB7thWxVMWeJxYSQoaEvKhM9iK2IJqa3hDZPgECQQDlh0fiu5qY+8+A',
+  'lCENUGeO+iDnJYZcJBlK1VVaub8nUvMbxfgbRE/VXgZ2x9+GZbAp8P/7fEpdUpCh',
+  'mcCnNtD/AkEA3yCcnWI77sqOSptAYyIRdXSVIaI0dukR8LJ6zKkVZpPoXPi1cRUV',
+  'tqk/2xdc+AvcsjW7jFBUg4uNnEQ7fmIJwQJBAN73+60V8aiLdZfCThlQ8kjCUxQ4',
+  'L71yk99OPgxURI0+10szlUFnquXq4PyiTVGRlwAnTYRPyS2+9yEE61GEvqECQQDG',
+  'C7I3V4wOxadKvUaHNyP79wCvm8Opj/ImjKTGp4WhSMNEUlTqDGb7fHp7Qt94Iz8+',
+  'xsazIlIBeIq3GzEbWnWBAkEA5ItDlfbhTCvw6xtzBiYazAyRw6b2kZzs7blYp0Fa',
+  'Rnj0wYN/ce424kOV7iXkc13Ws4nYS1dERgUOpQ+DO3waSQ==',
+  '-----END RSA PRIVATE KEY-----'
+].join('');
+
+const user1public = [
+  '-----BEGIN PUBLIC KEY-----',
+  'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDIDhTzCZvkwXp+EqyDXKXTpAOo',
+  'XetaCGf1yDAXQET/REP9cHKfyhq9peNties4pfeR/jzKQiUGeRmcSHq//Vu4CfTM',
+  'aUgXvnQkfNe5Jy/quyC/P1ybBa8dF5VNp99+NGTH4qnINSqGUPpkMWEbmgJyi103',
+  '5NkZ06hN05S9gUqHPwIDAQAB',
+  '-----END PUBLIC KEY-----'
+
+].join('');
+
 const user2public = [
   '-----BEGIN PUBLIC KEY-----',
   'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC56C7ACOTiTL0rGElWTtqbsPbr',
@@ -57,9 +85,6 @@ const user2public = [
   'gDWpkn+CBiNkFDdTNwIDAQAB',
   '-----END PUBLIC KEY-----'
 ];
-
-// const user2private = require('./keys/useraaaaaaab');
-// const user2public = require('./keys/useraaaaaaab.pub');
 
 // set up styling classes using material-ui "withStyles"
 const styles = theme => ({
@@ -104,7 +129,6 @@ class Index extends Component {
 
     const a1 = accounts[0];
     const a2 = accounts[1];
-    let JSEncrypt = new jsencrypt();
 
     // collect form data
     let account = a1.name;
@@ -117,7 +141,8 @@ class Index extends Component {
     let actionData = {};
 
 
-    JSEncrypt.setPrivateKey(user1private);
+    let encrypt = new jsencrypt();
+    encrypt.setPublicKey(user1private);
 
     // define actionName and action according to event type
     switch (event.target.type.value) {
@@ -126,7 +151,7 @@ class Index extends Component {
         actionData = {
           _usr: account,
           _asset_name: '127.0.0.1',
-          _encrypted_asset_content: JSEncrypt.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256")
+          _encrypted_asset_content: encrypt.encrypt(event.target.credentials.value)
         };
         break;
       case "transfer":
@@ -210,9 +235,8 @@ class Index extends Component {
     this.setState({showtransfer: true});
   }
 
-  proposedup(asset_id, public_rsa, encrypted_asset_content) {
-
-    console.log(asset_id, public_rsa, encrypted_asset_content);
+  async proposedup(asset_id, encrypted_asset_content, public_rsa ) {
+    "use strict";
 
       const account = accounts[0].name;
       const privateKey = accounts[0].privateKey;
@@ -221,26 +245,34 @@ class Index extends Component {
         keyProvider: privateKey,
       });
 
+      let decrypt = new jsencrypt();
+      decrypt.setPrivateKey(user1private);
 
-      //
-      // const result = await eos.transaction({
-      //   actions: [{
-      //     account: "venturerocks",
-      //     name: "proposedup",
-      //     authorization: [{
-      //       actor: account,
-      //       permission: 'active',
-      //     }],
-      //     data: {
-      //       sender: account,
-      //       reciever: "useraaaaaaab",
-      //       asset_id: asset_id,
-      //       recrypted_asset:
-      //     },
-      //   }],
-      // });
-      //
-      // this.getAsset();
+      let decrypted = decrypt.decrypt(encrypted_asset_content);
+
+      let encrypt = new jsencrypt();
+      encrypt.setPublicKey(user2private);
+
+      let encoded = encrypt.encrypt(decrypted);
+
+      const result = await eos.transaction({
+        actions: [{
+          account: "venturerocks",
+          name: "proposedup",
+          authorization: [{
+            actor: account,
+            permission: 'active',
+          }],
+          data: {
+            sender: account,
+            reciever: "useraaaaaaab",
+            asset_id: asset_id,
+            recrypted_asset: encoded
+          },
+        }],
+      });
+
+      this.getAsset();
   }
 
   async deleteAsset(asset_id, user) {
