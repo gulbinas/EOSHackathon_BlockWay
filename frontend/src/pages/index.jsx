@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Eos from 'eosjs'; // https://github.com/EOSIO/eosjs
+import jsencrypt from 'jsencrypt';
 
 // material-ui dependencies
 import { withStyles } from '@material-ui/core/styles';
@@ -52,6 +53,9 @@ const user1private = [
 
 // set up styling classes using material-ui "withStyles"
 const styles = theme => ({
+  wrap: {
+    margin: 20,
+  },
   card: {
     margin: 20,
   },
@@ -74,7 +78,7 @@ class Index extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      credentials: [] // to store the table rows from smart contract
+      credentials: [], // to store the table rows from smart contract
     };
     this.handleFormEvent = this.handleFormEvent.bind(this);
   }
@@ -87,6 +91,7 @@ class Index extends Component {
 
     const a1 = accounts[0];
     const a2 = accounts[1];
+    let CryptoJS = new jsencrypt();
 
     // collect form data
     let account = a1.name;
@@ -98,62 +103,61 @@ class Index extends Component {
     let actionName = "";
     let actionData = {};
 
+console.log(user1private);
+    CryptoJS.setPrivateKey(user1private);
+    let val = CryptoJS.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256");
+    console.log(val);
+
     // define actionName and action according to event type
-    switch (event.target.type.value) {
-      case "store":
-        actionName = "addasset";
-        actionData = {
-          _user: account,
-          _credentials: event.target.credentials.value,
-        };
-        break;
-      case "destroy":
-        actionName = "destroy";
-        actionData = {
-          _user: account,
-          _uid: event.target.uid.value
-        };
-        break;
-      case "transfer":
-        actionName = "transfer";
-        actionData = {
-          _account_from: account,
-          _account_to: account2,
-          _uid: event.target.uid.value
-        };
-        break;
-      case "accept":
-        actionName = "transfer";
-        actionData = {
-          _account_from: account,
-          _account_to: account2,
-          _uid: event.target.uid.value
-        };
-      default:
-        return;
-    }
-
-    // eosjs function call: connect to the blockchain
-    const eos = Eos({
-      httpEndpoint: endpoint,
-      keyProvider: privateKey,
-    });
-
-    // console.log(actionData);
-    const result = await eos.transaction({
-      actions: [{
-        account: "notechainacc",
-        name: actionName,
-        authorization: [{
-          actor: account,
-          permission: 'active',
-        }],
-        data: actionData,
-      }],
-    });
-
-    console.log(result);
-    this.getTable();
+    // switch (event.target.type.value) {
+    //   case "store":
+    //     actionName = "addasset";
+    //     actionData = {
+    //       _usr: account,
+    //       _asset_name: 'test',
+    //       _encrypted_asset_content: CryptoJS.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256"),
+    //     };
+    //     break;
+    //   case "transfer":
+    //     actionName = "transfer";
+    //     actionData = {
+    //       _account_from: account,
+    //       _account_to: account2,
+    //       _uid: event.target.uid.value
+    //     };
+    //     break;
+    //   case "accept":
+    //     actionName = "accept";
+    //     actionData = {
+    //       _account_from: account,
+    //       _account_to: account2,
+    //       _uid: event.target.uid.value
+    //     };
+    //   default:
+    //     return;
+    // }
+    //
+    // // eosjs function call: connect to the blockchain
+    // const eos = Eos({
+    //   httpEndpoint: endpoint,
+    //   keyProvider: privateKey,
+    // });
+    //
+    // // console.log(actionData);
+    // const result = await eos.transaction({
+    //   actions: [{
+    //     account: "venturerocks",
+    //     name: actionName,
+    //     authorization: [{
+    //       actor: account,
+    //       permission: 'active',
+    //     }],
+    //     data: actionData,
+    //   }],
+    // });
+    //
+    // console.log(result);
+    // this.getTable();
   }
 
   // gets table data from the blockchain
@@ -233,27 +237,34 @@ class Index extends Component {
 
 
 
-    const printAssets = (key) => (
-      <Card className={classes.card}>
+    const printAssets = (key, asset) => (
+      <Card className={classes.card} key={key}>
         <CardContent>
-          <Typography>Expansion Panel 1</Typography>
+          <Typography>{asset}</Typography>
         </CardContent>
       </Card>
     );
 
     const printCredentials = (key, user, assets, public_rsa) => (
-      <ExpansionPanel>
+      <ExpansionPanel key={key}>
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
           <Typography className={classes.heading}>{user} ({assets.length})</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-          { assets.map((row, i) => printAssets(i) ) }
+          {assets.length ? (
+            assets.map((row, i) => printAssets(i, row))
+          ) : (
+            <Typography>There are no credentials assigned to this user.</Typography>
+          )}
         </ExpansionPanelDetails>
       </ExpansionPanel>
     );
 
-    let storedCredentials = credentials.map((row, i) =>
-      printCredentials(i, row.acc_name, row.owned_assets, row.publicRSA));
+    let storedCredentials = credentials.map((row, i) => {
+      if (row.acc_name == 'useraaaaaaaa') {
+        return printCredentials(i, row._acc_name, row.owned_assets, row.publicRSA)
+      }
+    });
 
     return (
       <div>
@@ -262,11 +273,13 @@ class Index extends Component {
             <Typography variant="title" color="inherit">BLOCKWAY</Typography>
           </Toolbar>
         </AppBar>
-        <Typography variant="headline" component="h2" align="center">
-          List of available credentials
+        <Typography variant="headline" component="h2" align="center" className={classes.wrap}>
+          List of <strong>useraaaaaaaa</strong> available credentials
         </Typography>
 
-        { storedCredentials }
+        <div className={classes.wrap}>
+          { storedCredentials }
+        </div>
 
         <Card className={classes.card}>
           <CardContent>
