@@ -49,6 +49,15 @@ const user1private = [
   '-----END RSA PRIVATE KEY-----'
 ].join('');
 
+const user2public = [
+  '-----BEGIN PUBLIC KEY-----',
+  'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC56C7ACOTiTL0rGElWTtqbsPbr',
+  '+Yrm7ErGKxqrDjKaUlXBFzoF5AWBHho7YslFrHJK4QOkOAyORBbGOi2SDRJeHYFO',
+  'NZZgudZCDax1m0Xg0GE8UgsJxxQfFr94dHf1aEWnww4vZ92GRJk6QiysBJYDAlAl',
+  'gDWpkn+CBiNkFDdTNwIDAQAB',
+  '-----END PUBLIC KEY-----'
+];
+
 // const user2private = require('./keys/useraaaaaaab');
 // const user2public = require('./keys/useraaaaaaab.pub');
 
@@ -116,7 +125,7 @@ class Index extends Component {
         actionName = "addasset";
         actionData = {
           _usr: account,
-          _asset_name: 'test',
+          _asset_name: '127.0.0.1',
           _encrypted_asset_content: JSEncrypt.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256")
         };
         break;
@@ -160,6 +169,7 @@ class Index extends Component {
     });
 
     this.getTable();
+    this.getAsset();
   }
 
   // gets table data from the blockchain
@@ -205,6 +215,8 @@ class Index extends Component {
 
       this.setState({ assets: result.rows, loading: false })
     });
+
+    this.getAsset();
   }
 
   componentDidMount() {
@@ -216,66 +228,45 @@ class Index extends Component {
     this.setState({showtransfer: true});
   }
 
-  async transferCredentials(asset_id, public_rsa, user) {
-      console.log(asset_id, public_rsa, user);
+  async proposedup(asset_id, public_rsa, user) {
 
-      const account = accounts[0].name;
-      const privateKey = accounts[0].privateKey;
-      const eos = Eos({
-        httpEndpoint: endpoint,
-        keyProvider: privateKey,
-      });
+    console.log(asset_id, public_rsa, user);
 
-      const result = await eos.transaction({
-        actions: [{
-          account: "venturerocks",
-          name: "remove",
-          authorization: [{
-            actor: account,
-            permission: 'active',
-          }],
-          data: {
-            _usr: user,
-            _asset_id: asset_id
-          },
-        }],
-      });
-
-      this.getAsset();
+      // const account = accounts[0].name;
+      // const privateKey = accounts[0].privateKey;
+      // const eos = Eos({
+      //   httpEndpoint: endpoint,
+      //   keyProvider: privateKey,
+      // });
+      //
+      // const result = await eos.transaction({
+      //   actions: [{
+      //     account: "venturerocks",
+      //     name: "proposedup",
+      //     authorization: [{
+      //       actor: account,
+      //       permission: 'active',
+      //     }],
+      //     data: {
+      //       sender: account,
+      //       reciever: "useraaaaaaab",
+      //       asset_id: asset_id,
+      //       recrypted_asset:
+      //     },
+      //   }],
+      // });
+      //
+      // this.getAsset();
   }
 
   async deleteAsset(asset_id, user) {
-    // const account = accounts[0].name;
-    // const privateKey = accounts[0].privateKey;
-    // const eos = Eos({
-    //   httpEndpoint: endpoint,
-    //   keyProvider: privateKey,
-    // });
-
-    // console.log();
-
-    // const result = await eos.transaction({
-    //   actions: [{
-    //     account: "venturerocks",
-    //     name: "remove",
-    //     authorization: [{
-    //       actor: account,
-    //       permission: 'active',
-    //     }],
-    //     data: {
-    //       _usr: account,
-    //       _asset_id: new Number(asset_id),
-    //     },
-    //   }],
-    // });
-    //
-    // console.log(result);
+    "use strict";
 
     let config = {
      chainId: "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f",
-     httpEndpoint: 'http://10.20.3.30:8888',
+     httpEndpoint: endpoint,
      authorization: 'useraaaaaaaa@active',
-     keyProvider: ['5K7mtrinTFrVTduSxizUc5hjXJEtTjVTsqSHeBHes1Viep86FP5'],
+     keyProvider: '5K7mtrinTFrVTduSxizUc5hjXJEtTjVTsqSHeBHes1Viep86FP5',
      expireInSeconds: 60,
      broadcast: true,
      verbose: false, // API activity
@@ -286,7 +277,7 @@ class Index extends Component {
 
 
   eos.contract('venturerocks').then((venturerocks) => {
-    venturerocks.remove("useraaaaaaaa",40003)
+    venturerocks.remove("useraaaaaaaa",asset_id)
   });
   }
 
@@ -301,7 +292,7 @@ class Index extends Component {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
           <Button color="primary" onClick={(e) => { e.preventDefault(); this.deleteAsset(asset_id, user) }}>Delete credential</Button>
-          <Button color="primary" onClick={(e) => { e.preventDefault(); this.traansferCredentials(asset_id, public_rsa, user) }}>Transfer to useraaaaaaab</Button>
+          <Button color="primary" onClick={(e) => { e.preventDefault(); this.proposedup(asset_id, public_rsa, user) }}>Transfer to useraaaaaaab</Button>
         </ExpansionPanelDetails>
       </ExpansionPanel>
     );
