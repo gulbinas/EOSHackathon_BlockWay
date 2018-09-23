@@ -194,6 +194,7 @@ class Index extends Component {
     });
 
     this.getTable();
+    this.getAsset();
   }
 
   // gets table data from the blockchain
@@ -255,6 +256,8 @@ class Index extends Component {
 
       let encoded = encrypt.encrypt(decrypted);
 
+      console.log(encoded);
+
       const result = await eos.transaction({
         actions: [{
           account: "venturerocks",
@@ -294,6 +297,8 @@ class Index extends Component {
     eos.contract('venturerocks').then((venturerocks) => {
       venturerocks.remove("useraaaaaaaa",asset_id)
     });
+
+    this.getAsset();
   }
 
   render() {
