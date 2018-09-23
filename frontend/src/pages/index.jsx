@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Eos from 'eosjs'; // https://github.com/EOSIO/eosjs
 import jsencrypt from 'jsencrypt';
+import CryptoJS from 'crypto-js';
 
 // material-ui dependencies
 import { withStyles } from '@material-ui/core/styles';
@@ -91,7 +92,7 @@ class Index extends Component {
 
     const a1 = accounts[0];
     const a2 = accounts[1];
-    let CryptoJS = new jsencrypt();
+    let JSEncrypt = new jsencrypt();
 
     // collect form data
     let account = a1.name;
@@ -103,61 +104,62 @@ class Index extends Component {
     let actionName = "";
     let actionData = {};
 
-console.log(user1private);
-    CryptoJS.setPrivateKey(user1private);
-    let val = CryptoJS.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256");
-    console.log(val);
+
+    JSEncrypt.setPrivateKey(user1private);
+    // console.log(JSEncrypt, CryptoJS.SHA256);
+    // let val = JSEncrypt.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256");
+    // console.log(val);
 
     // define actionName and action according to event type
-    // switch (event.target.type.value) {
-    //   case "store":
-    //     actionName = "addasset";
-    //     actionData = {
-    //       _usr: account,
-    //       _asset_name: 'test',
-    //       _encrypted_asset_content: CryptoJS.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256"),
-    //     };
-    //     break;
-    //   case "transfer":
-    //     actionName = "transfer";
-    //     actionData = {
-    //       _account_from: account,
-    //       _account_to: account2,
-    //       _uid: event.target.uid.value
-    //     };
-    //     break;
-    //   case "accept":
-    //     actionName = "accept";
-    //     actionData = {
-    //       _account_from: account,
-    //       _account_to: account2,
-    //       _uid: event.target.uid.value
-    //     };
-    //   default:
-    //     return;
-    // }
-    //
+    switch (event.target.type.value) {
+      case "store":
+        actionName = "addasset";
+        actionData = {
+          _usr: account,
+          _asset_name: 'test',
+          _encrypted_asset_content: JSEncrypt.sign(event.target.credentials.value, CryptoJS.SHA256, "sha256")
+        };
+        break;
+      case "transfer":
+        actionName = "transfer";
+        actionData = {
+          _account_from: account,
+          _account_to: account2,
+          _uid: event.target.uid.value
+        };
+        break;
+      case "accept":
+        actionName = "accept";
+        actionData = {
+          _account_from: account,
+          _account_to: account2,
+          _uid: event.target.uid.value
+        };
+      default:
+        return;
+    }
+
     // // eosjs function call: connect to the blockchain
-    // const eos = Eos({
-    //   httpEndpoint: endpoint,
-    //   keyProvider: privateKey,
-    // });
-    //
-    // // console.log(actionData);
-    // const result = await eos.transaction({
-    //   actions: [{
-    //     account: "venturerocks",
-    //     name: actionName,
-    //     authorization: [{
-    //       actor: account,
-    //       permission: 'active',
-    //     }],
-    //     data: actionData,
-    //   }],
-    // });
-    //
-    // console.log(result);
-    // this.getTable();
+    const eos = Eos({
+      httpEndpoint: endpoint,
+      keyProvider: privateKey,
+    });
+
+    // console.log(actionData);
+    const result = await eos.transaction({
+      actions: [{
+        account: "venturerocks",
+        name: actionName,
+        authorization: [{
+          actor: account,
+          permission: 'active',
+        }],
+        data: actionData,
+      }],
+    });
+
+    console.log(result);
+    this.getTable();
   }
 
   // gets table data from the blockchain
@@ -262,7 +264,7 @@ console.log(user1private);
 
     let storedCredentials = credentials.map((row, i) => {
       if (row.acc_name == 'useraaaaaaaa') {
-        return printCredentials(i, row._acc_name, row.owned_assets, row.publicRSA)
+        return printCredentials(i, row.acc_name, row.owned_assets, row.publicRSA)
       }
     });
 
@@ -274,7 +276,7 @@ console.log(user1private);
           </Toolbar>
         </AppBar>
         <Typography variant="headline" component="h2" align="center" className={classes.wrap}>
-          List of <strong>useraaaaaaaa</strong> available credentials
+          List of available credentials
         </Typography>
 
         <div className={classes.wrap}>

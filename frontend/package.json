@@ -5,9 +5,11 @@
   "dependencies": {
     "@material-ui/core": "^1.5.1",
     "@material-ui/icons": "^3.0.1",
+    "crypto-js": "^3.1.9-1",
     "eosjs": "16.0.7",
     "eosjs-ecc": "^4.0.4",
     "hybrid-crypto-js": "^0.1.6",
+    "jsencrypt": "^3.0.0-rc.1",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-router": "^4.3.1",
