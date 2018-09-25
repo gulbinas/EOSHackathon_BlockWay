@@ -150,7 +150,7 @@ class Index extends Component {
         actionName = "addasset";
         actionData = {
           _usr: account,
-          _asset_name: '127.0.0.1',
+          _asset_name: '{WEB_RESOURCE}',
           _encrypted_asset_content: encrypt.encrypt(event.target.credentials.value)
         };
         break;
@@ -183,7 +183,7 @@ class Index extends Component {
     // console.log(actionData);
     const result = await eos.transaction({
       actions: [{
-        account: "venturerocks",
+        account: "testh",
         name: actionName,
         authorization: [{
           actor: account,
@@ -204,8 +204,8 @@ class Index extends Component {
     });
     eos.getTableRows({
       "json": true,
-      "code": "venturerocks",   // contract who owns the table
-      "scope": "venturerocks",  // scope of the table
+      "code": "testh",   // contract who owns the table
+      "scope": "testh",  // scope of the table
       "table": "account",    // name of the table as specified by the contract abi
       "limit": 100,
     }).then(result => this.setState({ credentials: result.rows }));
@@ -218,8 +218,8 @@ class Index extends Component {
 
     eos.getTableRows({
       "json": true,
-      "code": "venturerocks",   // contract who owns the table
-      "scope": "venturerocks",  // scope of the table
+      "code": "testh",   // contract who owns the table
+      "scope": "testh",  // scope of the table
       "table": "assets",    // name of the table as specified by the contract abi
       "limit": 100,
     }).then(result => {
@@ -256,8 +256,6 @@ class Index extends Component {
 
       let encoded = encrypt.encrypt(decrypted);
 
-      console.log(encoded);
-
       let config = {
        chainId: "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f",
        httpEndpoint: endpoint,
@@ -271,13 +269,12 @@ class Index extends Component {
 
       let eos2 = Eos(config);
 
-      eos2.contract('venturerocks').then((venturerocks) => {
-        venturerocks.proposedup(account, "useraaaaaaab", asset_id, encoded)
-
-        this.getAsset();
-        this.acceptdup();
+      await eos2.contract('testh').then((testh) => {
+        testh.proposedup(account, "useraaaaaaab", asset_id, encoded)
       });
 
+      this.getAsset();
+      this.acceptdup();
   }
 
   async acceptdup() {
@@ -315,11 +312,39 @@ class Index extends Component {
 
       let eos2 = Eos(config);
 
-      eos2.contract('venturerocks').then((venturerocks) => {
-        venturerocks.acceptdup('useraaaaaaab', "useraaaaaaaa")
-
-        this.getAsset();
+      await eos2.contract('testh').then((testh) => {
+        testh.acceptdup('useraaaaaaab', "useraaaaaaaa")
       });
+
+      this.getAsset();
+  }
+
+  async deleteAsset(asset_id, user) {
+    "use strict";
+
+    console.log(asset_id, user);
+
+    const account = accounts[1].name;
+    const privateKey = accounts[1].privateKey;
+
+    let config = {
+     chainId: "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f",
+     httpEndpoint: endpoint,
+     authorization: 'useraaaaaaaa@active',
+     keyProvider: '5K7mtrinTFrVTduSxizUc5hjXJEtTjVTsqSHeBHes1Viep86FP5',
+     expireInSeconds: 60,
+     broadcast: true,
+     verbose: false, // API activity
+     sign: true
+    }
+
+    let eos = Eos(config);
+
+    await eos.contract('testh').then((testh) => {
+      testh.remove("useraaaaaaaa", asset_id)
+    });
+
+    this.getAsset();
   }
 
   async acceptAsset(asset_id, user) {
@@ -338,31 +363,53 @@ class Index extends Component {
 
     let eos = Eos(config);
 
-    eos.contract('venturerocks').then((venturerocks) => {
-      venturerocks.remove("useraaaaaaaa",asset_id)
+    await eos.contract('testh').then((testh) => {
+      testh.remove("useraaaaaaaa",asset_id)
     });
 
     this.getAsset();
+  }
+
+  showPass(encoded) {
+
+    let decrypt = new jsencrypt();
+    decrypt.setPrivateKey(user1private);
+
+    let decrypted = decrypt.decrypt(encoded);
+
+    alert(decrypted);
   }
 
   render() {
     const { credentials, assets } = this.state;
     const { classes } = this.props;
 
-    const printAssets = (key, asset_id, asset_name, encrypted_asset_content, user) => (
+    const printAssets = (key, asset_id, asset_name, encrypted_asset_content, user, userBbased) => (
       <ExpansionPanel key={key}>
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
           <Typography className={classes.heading}>{asset_name}</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
           <Button color="primary" onClick={(e) => { e.preventDefault(); this.deleteAsset(asset_id, user) }}>Delete credential</Button>
-          <Button color="primary" onClick={(e) => { e.preventDefault(); this.proposedup(asset_id, encrypted_asset_content, user) }}>Transfer to useraaaaaaab</Button>
+          { (userBbased != false) ? <Button color="primary" onClick={(e) => { e.preventDefault(); this.proposedup(asset_id, encrypted_asset_content, user) }}>Transfer to useraaaaaaab</Button> : ""}
+          { (userBbased == false) ? <Button color="primary" onClick={(e) => { e.preventDefault(); this.showPass(encrypted_asset_content) }}>Show password</Button> : ""}
         </ExpansionPanelDetails>
       </ExpansionPanel>
     );
 
     let listAssets = assets.map((row, i) => {
-        return printAssets(i, row.ID, row.asset_name, row.encrypted_asset_content, row.owner)
+      if (row.owner !== 'useraaaaaaaa') {
+        return;
+      }
+
+      return printAssets(i, row.ID, row.asset_name, row.encrypted_asset_content, row.owner)
+    });
+
+    let listUserBAssets = assets.map((row, i) => {
+        if (row.owner !== 'useraaaaaaab') {
+          return;
+        }
+        return printAssets(i, row.ID, row.asset_name, row.encrypted_asset_content, row.owner, false)
     });
 
     if (this.state.loading) {
@@ -377,62 +424,76 @@ class Index extends Component {
             <Typography variant="title" color="inherit">BLOCKWAY</Typography>
           </Toolbar>
         </AppBar>
-        <Typography variant="headline" component="h2" align="center" className={classes.wrap}>
-          List of available credentials
-        </Typography>
 
-        <div className={classes.wrap}>
-          { listAssets }
-        </div>
-
-        <Card className={classes.card}>
-          <CardContent>
-            <Typography variant="headline" component="h2">
-              Store credentials
+        <Grid container spacing={24}>
+          <Grid item xs>
+            <Typography variant="headline" component="h2" align="center" className={classes.wrap}>
+              List of available credentials of <strong>useraaaaaaaa</strong>
             </Typography>
-            <form onSubmit={this.handleFormEvent}>
-              <input type="hidden" name="type" value="store" />
-              <TextField
-                name="account"
-                autoComplete="off"
-                label="Account"
-                margin="normal"
-                InputProps={{
-                  readOnly: true,
-                }}
-                value={accounts[0].name}
-                fullWidth
-              />
-              <TextField
-                name="privateKey"
-                autoComplete="off"
-                label="Private key"
-                margin="normal"
-                InputProps={{
-                  readOnly: true,
-                }}
-                value={accounts[0].privateKey}
-                fullWidth
-              />
-              <TextField
-                name="credentials"
-                autoComplete="off"
-                label="Credentials"
-                margin="normal"
-                multiline
-                rows="10"
-                fullWidth
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                className={classes.formButton}
-                type="submit">
-                Store Credentials
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+
+            <div className={classes.wrap}>
+              { listAssets }
+            </div>
+
+            <Card className={classes.card}>
+              <CardContent>
+                <Typography variant="headline" component="h2">
+                  Store credentials
+                </Typography>
+                <form onSubmit={this.handleFormEvent}>
+                  <input type="hidden" name="type" value="store" />
+                  <TextField
+                    name="account"
+                    autoComplete="off"
+                    label="Account"
+                    margin="normal"
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                    value={accounts[0].name}
+                    fullWidth
+                  />
+                  <TextField
+                    name="privateKey"
+                    autoComplete="off"
+                    label="Private key"
+                    margin="normal"
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                    value={accounts[0].privateKey}
+                    fullWidth
+                  />
+                  <TextField
+                    name="credentials"
+                    autoComplete="off"
+                    label="Credentials"
+                    margin="normal"
+                    multiline
+                    rows="10"
+                    fullWidth
+                  />
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className={classes.formButton}
+                    type="submit">
+                    Store Credentials
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs>
+            <Typography variant="headline" component="h2" align="center" className={classes.wrap}>
+              List of available credentials of <strong>useraaaaaaab</strong>
+            </Typography>
+
+            <div className={classes.wrap}>
+              { listUserBAssets }
+            </div>
+          </Grid>
+        </Grid>
       </div>
     );
   }
